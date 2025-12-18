@@ -47,7 +47,8 @@ class MainActivity : ComponentActivity() {
                 ) {
                     DashboardScreen(
                         viewModel = viewModel,
-                        onStartVpn = { requestVpnPermission() }
+                        onStartVpn = { requestVpnPermission() },
+                        onStopVpn = { stopVpnService() }
                     )
                 }
             }
@@ -64,9 +65,21 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun startVpnService() {
+        android.util.Log.d("MainActivity", "=== startVpnService() CALLED ===")
         val intent = Intent(this, DataSentryService::class.java)
         startForegroundService(intent)
+        android.util.Log.d("MainActivity", "=== startForegroundService() DONE ===")
         Toast.makeText(this, "Firewall Activated", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun stopVpnService() {
+        android.util.Log.d("MainActivity", "=== stopVpnService() CALLED ===")
+        val intent = Intent(this, DataSentryService::class.java).apply {
+            action = DataSentryService.ACTION_STOP
+        }
+        startService(intent) // Send STOP action
+        android.util.Log.d("MainActivity", "=== STOP intent sent ===")
+        Toast.makeText(this, "Firewall Deactivated", Toast.LENGTH_SHORT).show()
     }
 }
 

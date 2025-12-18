@@ -33,16 +33,25 @@ class DataSentryService : VpnService() {
     companion object {
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "DataSentryVPN"
+        const val ACTION_STOP = "com.datasentry.app.STOP_VPN"
     }
 
     override fun onCreate() {
         super.onCreate()
-        // Initialize Database & Repository
-        val db = AppDatabase.getDatabase(this)
-        repository = PacketRepository(db.packetDao())
+        Log.d(TAG, "Service onCreate() called")
+        // Database will be initialized lazily when first packet is logged
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Handle stop request
+        if (intent?.action == ACTION_STOP) {
+            Log.d(TAG, "=== STOP ACTION RECEIVED ===")
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            cleanup()
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
         Log.d(TAG, "DataSentry VPN Service starting...")
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, createNotification())
@@ -162,6 +171,12 @@ class DataSentryService : VpnService() {
     }
 
     private fun logPacketToDb(host: String) {
+        // Lazy init repository
+        if (!::repository.isInitialized) {
+            val db = AppDatabase.getDatabase(this)
+            repository = PacketRepository(db.packetDao())
+        }
+        
         val type = when {
             host.contains("google") -> "Analytics"
             host.contains("facebook") -> "Social"
@@ -186,19 +201,28 @@ class DataSentryService : VpnService() {
     }
 
     private fun cleanup() {
+        Log.d(TAG, "cleanup() called - Closing VPN interface")
         isRunning = false
         try {
             vpnInterface?.close()
             vpnInterface = null
-        } catch (e: Exception) { }
+            Log.d(TAG, "VPN interface closed successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error closing VPN interface: ${e.message}")
+        }
     }
 
     override fun onDestroy() {
+        Log.d(TAG, "=== onDestroy() CALLED - Stopping VPN ===")
+        isRunning = false
+        stopForeground(STOP_FOREGROUND_REMOVE)
         cleanup()
         super.onDestroy()
+        stopSelf()
     }
 
     override fun onRevoke() {
+        Log.d(TAG, "=== onRevoke() CALLED - VPN Permission Revoked ===")
         cleanup()
         super.onRevoke()
     }

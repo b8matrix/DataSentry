@@ -34,11 +34,14 @@ import kotlin.random.Random
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel,
-    onStartVpn: () -> Unit
+    onStartVpn: () -> Unit,
+    onStopVpn: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val packets by viewModel.packets.collectAsState()
     val riskCount by viewModel.riskCount.collectAsState()
     var isSimulating by remember { mutableStateOf(false) }
+    var isVpnActive by remember { mutableStateOf(false) }
 
     // Hackathon Visuals
     val privacyScore = (100 - (riskCount * 5)).coerceAtLeast(0)
@@ -115,7 +118,12 @@ fun DashboardScreen(
             Button(
                 onClick = { 
                     isSimulating = !isSimulating
-                    if(isSimulating) viewModel.startSimulation() else viewModel.stopSimulation()
+                    if (isSimulating) {
+                        viewModel.startSimulation()
+                    } else {
+                        viewModel.stopSimulation()
+                        onStopVpn() // Stop the actual VPN service
+                    }
                 },
                 modifier = Modifier.weight(1f).height(50.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -133,11 +141,23 @@ fun DashboardScreen(
             Spacer(modifier = Modifier.width(16.dp))
             
             Button(
-                onClick = onStartVpn,
+                onClick = {
+                    android.widget.Toast.makeText(context, "🔴 BUTTON CLICKED!", android.widget.Toast.LENGTH_SHORT).show()
+                    isVpnActive = !isVpnActive
+                    if (isVpnActive) {
+                        android.widget.Toast.makeText(context, "🟢 Starting VPN...", android.widget.Toast.LENGTH_SHORT).show()
+                        onStartVpn()
+                    } else {
+                        android.widget.Toast.makeText(context, "🔴 Stopping VPN...", android.widget.Toast.LENGTH_SHORT).show()
+                        onStopVpn()
+                    }
+                },
                 modifier = Modifier.weight(1f).height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF03DAC5))
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isVpnActive) Color(0xFFCF6679) else Color(0xFF03DAC5)
+                )
             ) {
-                 Text("ACTIVATE FIREWALL") // Real VPN
+                 Text(if (isVpnActive) "DEACTIVATE FIREWALL" else "ACTIVATE FIREWALL")
             }
         }
 

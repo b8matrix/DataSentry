@@ -14,6 +14,8 @@ public final class DataSentryService extends android.net.VpnService {
     @org.jetbrains.annotations.NotNull()
     private static final java.lang.String CHANNEL_ID = "DataSentryVPN";
     @org.jetbrains.annotations.NotNull()
+    public static final java.lang.String ACTION_STOP = "com.datasentry.app.STOP_VPN";
+    @org.jetbrains.annotations.NotNull()
     public static final com.datasentry.app.DataSentryService.Companion Companion = null;
     
     public DataSentryService() {
@@ -54,7 +56,7 @@ public final class DataSentryService extends android.net.VpnService {
     public void onRevoke() {
     }
     
-    @kotlin.Metadata(mv = {1, 9, 0}, k = 1, xi = 48, d1 = {"\u0000\u0018\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0002\n\u0002\u0010\u000e\n\u0000\n\u0002\u0010\b\n\u0000\b\u0086\u0003\u0018\u00002\u00020\u0001B\u0007\b\u0002\u00a2\u0006\u0002\u0010\u0002R\u000e\u0010\u0003\u001a\u00020\u0004X\u0082T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0005\u001a\u00020\u0006X\u0082T\u00a2\u0006\u0002\n\u0000\u00a8\u0006\u0007"}, d2 = {"Lcom/datasentry/app/DataSentryService$Companion;", "", "()V", "CHANNEL_ID", "", "NOTIFICATION_ID", "", "app_debug"})
+    @kotlin.Metadata(mv = {1, 9, 0}, k = 1, xi = 48, d1 = {"\u0000\u001a\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\b\u0002\n\u0002\u0010\u000e\n\u0002\b\u0002\n\u0002\u0010\b\n\u0000\b\u0086\u0003\u0018\u00002\u00020\u0001B\u0007\b\u0002\u00a2\u0006\u0002\u0010\u0002R\u000e\u0010\u0003\u001a\u00020\u0004X\u0086T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0005\u001a\u00020\u0004X\u0082T\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0006\u001a\u00020\u0007X\u0082T\u00a2\u0006\u0002\n\u0000\u00a8\u0006\b"}, d2 = {"Lcom/datasentry/app/DataSentryService$Companion;", "", "()V", "ACTION_STOP", "", "CHANNEL_ID", "NOTIFICATION_ID", "", "app_debug"})
     public static final class Companion {
         
         private Companion() {
