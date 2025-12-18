@@ -198,6 +198,9 @@ This project is created for educational/hackathon purposes. Use at your own disc
 
 **Aditya Nair**  
 GitHub: [@adityanair2509](https://github.com/adityanair2509)
+**Tanay Sagar**
+**Hridayshri Dave**
+
 
 ---
 
@@ -219,4 +222,5 @@ GitHub: [@adityanair2509](https://github.com/adityanair2509)
 
 ---
 
-**Built with ❤️ for privacy-conscious mobile users**
+**Built with ❤️ From Overwatchers**
+
