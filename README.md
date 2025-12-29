@@ -315,9 +315,9 @@ app/src/main/java/com/datasentry/app/
 **Overwatchers**
 
 - **Aditya Nair** - Lead Developer - [@adityanair2509](https://github.com/adityanair2509)
-- **Hridayshri Dave** - UI/UX Design
-- **Tanay Sagar** - Backend Architecture
-- **Bhagirath** - Testing & Documentation
+- **Hridayshri Dave** - UI/UX Design - [@hridaydave25](https://github.com/hridaydave25)
+- **Tanay Sagar** - Backend Architecture - [@tanaysagar](https://github.com/tanaysagar)
+- **Bhagirath** - Testing & Documentation - [@b8matrix](https://github.com/b8matrix)
 
 ---
 
