@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.datasentry.app.data.local.entity.PacketEntity
+import com.datasentry.app.presentation.sessions.SessionBasedDashboard
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
@@ -38,7 +39,7 @@ fun DashboardScreen(
     onStopVpn: () -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val packets by viewModel.packets.collectAsState()
+    val sessions by viewModel.sessions.collectAsState()
     val riskCount by viewModel.riskCount.collectAsState()
     var isSimulating by remember { mutableStateOf(false) }
     var isVpnActive by remember { mutableStateOf(false) }
@@ -102,7 +103,7 @@ fun DashboardScreen(
                     modifier = Modifier.size(120.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    PrivacyPulseMap(isActive = isSimulating)
+                    PrivacyPulseMap(isActive = isVpnActive)
                 }
             }
         }
@@ -138,7 +139,6 @@ fun DashboardScreen(
             
             Button(
                 onClick = {
-                    android.widget.Toast.makeText(context, "🔴 BUTTON CLICKED!", android.widget.Toast.LENGTH_SHORT).show()
                     isVpnActive = !isVpnActive
                     if (isVpnActive) {
                         android.widget.Toast.makeText(context, "🟢 Starting VPN...", android.widget.Toast.LENGTH_SHORT).show()
@@ -159,19 +159,11 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Live Log
-        Text("LIVE TRAFFIC (${packets.size})", color = Color.Gray, fontSize = 14.sp)
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(packets) { packet ->
-                PacketItem(packet)
-            }
-        }
+        // Session-Based Analysis (NEW!)
+        SessionBasedDashboard(
+            sessions = sessions,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 
