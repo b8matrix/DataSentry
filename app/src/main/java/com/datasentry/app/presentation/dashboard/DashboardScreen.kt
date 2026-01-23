@@ -214,7 +214,7 @@ fun PacketItem(packet: PacketEntity) {
                     fontSize = 11.sp, 
                     fontWeight = FontWeight.Bold
                 )
-                Text("${packet.sizeBytes / 1024} KB", color = Color.Gray, fontSize = 12.sp)
+                Text(formatSize(packet.sizeBytes), color = Color.Gray, fontSize = 12.sp)
             }
         }
     }
@@ -269,5 +269,17 @@ fun PrivacyPulseMap(isActive: Boolean) {
         
         // Center Device
         drawCircle(Color.White, 8.dp.toPx(), center)
+    }
+}
+
+/**
+ * Format bytes into human-readable size.
+ */
+private fun formatSize(bytes: Int): String {
+    return when {
+        bytes >= 1024 * 1024 -> String.format("%.1f MB", bytes / (1024f * 1024f))
+        bytes >= 1024 -> String.format("%.1f KB", bytes / 1024f)
+        bytes > 0 -> "$bytes B"
+        else -> "DNS"  // For DNS queries, show "DNS" instead of 0
     }
 }

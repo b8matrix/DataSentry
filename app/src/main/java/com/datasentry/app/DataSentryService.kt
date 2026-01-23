@@ -18,6 +18,8 @@ import com.datasentry.app.data.repository.PacketRepository
 import com.datasentry.app.data.repository.SuspiciousEventRepositoryImpl
 import com.datasentry.app.demo.DemoScenarioEngine
 import com.datasentry.app.inspector.TrafficInspector
+import com.datasentry.app.vpn.DnsOnlyHandler
+import com.datasentry.app.vpn.VpnPacketHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -37,12 +39,20 @@ class DataSentryService : VpnService() {
         private const val CHANNEL_ID = "vpn_channel"
         private const val NOTIFICATION_ID = 1
         private const val TAG = "DataSentryVPN"
+        
+        // Set to true for REAL packet capture, false for demo simulation
+        // Toggle this for semi-finals demo!
+        const val REAL_MODE = true
     }
 
     private var vpnInterface: ParcelFileDescriptor? = null
     private var isRunning = false
     private var tunReaderThread: Thread? = null
     private val stopSignal = AtomicBoolean(false)
+    
+    // Real mode packet handler
+    private var packetHandler: VpnPacketHandler? = null
+    private var dnsHandler: DnsOnlyHandler? = null
     
     private val statsLock = Any()
     private var suspiciousCount: Int = 0
@@ -86,6 +96,8 @@ class DataSentryService : VpnService() {
     // ================= VPN SETUP =================
 
     private fun startVpn() {
+        Log.e(TAG, "=== startVpn() CALLED ===")  // Using Log.e so it definitely shows
+        
         try {
             stopSignal.set(false)
             
@@ -96,25 +108,57 @@ class DataSentryService : VpnService() {
             lastStatsBroadcastMs = 0L
             broadcastStats()
 
-            // DEMO MODE: Create VPN interface WITHOUT routing traffic
-            // This shows VPN icon but doesn't break internet
+            Log.e(TAG, "Building VPN interface, REAL_MODE=$REAL_MODE")
+            
             val builder = Builder()
                 .setSession("DataSentry Traffic Monitor")
                 .addAddress("10.0.0.2", 32)
-                // NO addRoute() = Traffic flows normally through real network
+                .setMtu(1500)
                 .setBlocking(false)
+            
+            if (REAL_MODE) {
+                Log.e(TAG, "Adding DNS routes...")
+                // DNS-ONLY MODE: Route DNS server IPs through VPN
+                builder.addRoute("8.8.8.8", 32)   // Google DNS
+                builder.addRoute("8.8.4.4", 32)   // Google DNS secondary
+                builder.addRoute("1.1.1.1", 32)   // Cloudflare DNS
+                builder.addRoute("1.0.0.1", 32)   // Cloudflare DNS secondary
+                
+                // FORCE device to use these DNS servers (this is key!)
+                // This makes DNS queries go TO 8.8.8.8 which we're routing through VPN
+                builder.addDnsServer("8.8.8.8")
+                builder.addDnsServer("8.8.4.4")
+                
+                // Also allow the VPN to access the internet
+                builder.allowFamily(android.system.OsConstants.AF_INET)
+            }
 
+            Log.e(TAG, "Calling builder.establish()...")
             vpnInterface = builder.establish()
+            Log.e(TAG, "VPN established, vpnInterface=${vpnInterface != null}")
+            
             isRunning = true
 
-            Log.d(TAG, "VPN established (DEMO MODE - no traffic capture)")
-            broadcastLog("🛡️ DataSentry Protection Active")
-
-            // Start demo simulation instead of real packet capture
-            startDemoSimulation()
+            if (REAL_MODE) {
+                Log.e(TAG, "Starting DnsOnlyHandler...")
+                broadcastLog("🛡️ DataSentry Active - Monitoring DNS")
+                
+                vpnInterface?.let { pfd ->
+                    Log.e(TAG, "Creating DnsOnlyHandler with pfd=$pfd")
+                    dnsHandler = DnsOnlyHandler(this, pfd, packetRepository)
+                    dnsHandler?.start()
+                    Log.e(TAG, "DnsOnlyHandler started!")
+                } ?: run {
+                    Log.e(TAG, "ERROR: vpnInterface is null!")
+                }
+            } else {
+                Log.e(TAG, "DEMO MODE - starting simulation")
+                broadcastLog("🛡️ DataSentry Protection Active (Demo)")
+                startDemoSimulation()
+            }
 
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to start VPN", e)
+            Log.e(TAG, "Failed to start VPN: ${e.message}", e)
             broadcastLog("VPN failed to start: ${e.message}")
             stopSelf()
         }
@@ -437,6 +481,18 @@ class DataSentryService : VpnService() {
     private fun stopVpn() {
         isRunning = false
         stopSignal.set(true)
+
+        // Stop real mode packet handler
+        try {
+            packetHandler?.stop()
+        } catch (_: Exception) {}
+        packetHandler = null
+
+        // Stop DNS handler
+        try {
+            dnsHandler?.stop()
+        } catch (_: Exception) {}
+        dnsHandler = null
 
         try {
             demoThread?.interrupt()
